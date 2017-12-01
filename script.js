@@ -24,26 +24,26 @@ function Brick(x,y,width, height) {
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 
+var b_init_vel = 1.5;
 
-
-var dx = 1;
-var dy = -1;
+var dx = b_init_vel;
+var dy = -b_init_vel;
 var paddle_dx = 8;
 
 var brick_rows = 3;
-var brick_col = 30;
 var brick_width = 50;
 var brick_height = 20;
 var brick_padding = 10;
 var brick_offset_top = 30;
 var brick_offset_left = 30;
+var brick_col;
 var score = 0;
 var lives = 3;
 
 // controls
 var right_pressed = false;
 var left_pressed = false;
-var pause = true;
+var pause = false;
 
 
 
@@ -53,6 +53,7 @@ var pause = true;
     ctx.canvas.width  = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
 
+    brick_col = Math.floor((canvas.width-brick_offset_left) / (brick_width+brick_padding));
     var paddle = new Paddle(canvas.width / 2, canvas.height - 30);
     var ball = new Ball(paddle.x + paddle.width / 2, canvas.height - paddle.height - 50);
 
@@ -71,6 +72,11 @@ var pause = true;
             bricks[i][j] = new Brick(brickx, bricky, brick_width, brick_height);
         }
     }
+
+    setInterval(function(){
+      dx+=0.1;
+      dy+=0.1;
+    },1*1000);
 
     setInterval(draw, 1/60);
 
@@ -119,7 +125,6 @@ function collisionDetection() {
                 score++;
                 if(score == brick_rows*brick_col) {
                     alert("YOU WIN, CONGRATULATIONS!");
-                    pause = true;
                     document.location.reload();
                 }
             }
@@ -144,7 +149,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawLives();
     drawScore();
-    drawBall(ball);
+    drawBall(ball,"red");
     drawPaddle(paddle);
     drawBricks();
     collisionDetection();
@@ -172,8 +177,8 @@ function draw() {
         else {
             ball.x = canvas.width/2;
             ball.y = canvas.height-30;
-            dx = 1;
-            dy = -1;
+            dx = b_init_vel;
+            dy = -b_init_vel;
             paddle.x = (canvas.width-paddle.width)/2;
         }
     }
