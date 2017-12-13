@@ -70,7 +70,10 @@
             width:100%;
             height:100%;
         }
-        #settings > h2 {
+        #settings-sec{
+            padding:100px;
+        }
+        #settings-sec > h2 {
             text-align:center;
             width:100%;
             display:block;
@@ -78,24 +81,39 @@
         #dificulty-wrap{
             display:flex;
             flex-direction:row;
+            margin-top: 15px;
+
         }
         #dificulty-wrap input{
             margin: 5px 10px;
+            border:none;
+            border-bottom: 1px solid #555555;
         }
         .settings-label {
             margin-bottom: 50px;
         }
+        .settings-label input{
+            margin-top:10px;
+            border:none;
+            border-bottom:1px solid #555555;
+            padding:15px;
+        }
+        .settings-label input:focus{
+     
+            outline-color: #555555;
+        }
         #apply-btn{
-            border-radius: 50%;
+
             margin:0 auto;
             display: block;
-            width: 150px;
+            width: 200px;
             text-align: center;
             padding: 10px;
             color:white;
             cursor: pointer;
-            background: cyan;
+            background: #555555;
         }
+}
 	</style>
 </head>
 <body>
@@ -202,25 +220,25 @@
 
     <div data-action-src="settings-lb" class="lightbox lb-closed">
         <!-- Settings section here -->
-        <section id="settings-sec">
-            <div id="settings-close-bar">
-                <span data-action-on="settings-lb" id="close-settings-btn" class="close-lb">
-        			<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-						 viewBox="0 0 507.2 507.2" style="enable-background:new 0 0 507.2 507.2;" xml:space="preserve">
-					<circle style="fill:#F15249;" cx="253.6" cy="253.6" r="253.6"/>
-					<path style="fill:#AD0E0E;" d="M147.2,368L284,504.8c115.2-13.6,206.4-104,220.8-219.2L367.2,148L147.2,368z"/>
-					<path style="fill:#FFFFFF;" d="M373.6,309.6c11.2,11.2,11.2,30.4,0,41.6l-22.4,22.4c-11.2,11.2-30.4,11.2-41.6,0l-176-176
-						c-11.2-11.2-11.2-30.4,0-41.6l23.2-23.2c11.2-11.2,30.4-11.2,41.6,0L373.6,309.6z"/>
-					<path style="fill:#D6D6D6;" d="M280.8,216L216,280.8l93.6,92.8c11.2,11.2,30.4,11.2,41.6,0l23.2-23.2c11.2-11.2,11.2-30.4,0-41.6
-						L280.8,216z"/>
-					<path style="fill:#FFFFFF;" d="M309.6,133.6c11.2-11.2,30.4-11.2,41.6,0l23.2,23.2c11.2,11.2,11.2,30.4,0,41.6L197.6,373.6
-						c-11.2,11.2-30.4,11.2-41.6,0l-22.4-22.4c-11.2-11.2-11.2-30.4,0-41.6L309.6,133.6z"/>
+        <div id="settings-close-bar">
+            <span data-action-on="settings-lb" id="close-settings-btn" class="close-lb">
+                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                     viewBox="0 0 507.2 507.2" style="enable-background:new 0 0 507.2 507.2;" xml:space="preserve">
+                <circle style="fill:#F15249;" cx="253.6" cy="253.6" r="253.6" />
+                <path style="fill:#AD0E0E;" d="M147.2,368L284,504.8c115.2-13.6,206.4-104,220.8-219.2L367.2,148L147.2,368z" />
+                <path style="fill:#FFFFFF;" d="M373.6,309.6c11.2,11.2,11.2,30.4,0,41.6l-22.4,22.4c-11.2,11.2-30.4,11.2-41.6,0l-176-176
+						c-11.2-11.2-11.2-30.4,0-41.6l23.2-23.2c11.2-11.2,30.4-11.2,41.6,0L373.6,309.6z" />
+                <path style="fill:#D6D6D6;" d="M280.8,216L216,280.8l93.6,92.8c11.2,11.2,30.4,11.2,41.6,0l23.2-23.2c11.2-11.2,11.2-30.4,0-41.6
+						L280.8,216z" />
+                <path style="fill:#FFFFFF;" d="M309.6,133.6c11.2-11.2,30.4-11.2,41.6,0l23.2,23.2c11.2,11.2,11.2,30.4,0,41.6L197.6,373.6
+						c-11.2,11.2-30.4,11.2-41.6,0l-22.4-22.4c-11.2-11.2-11.2-30.4,0-41.6L309.6,133.6z" />
 
 					</svg>
-                </span>
-            </div>
+            </span>
+        </div>
 
-            <center><h2> Options </h2></center>
+        <section id="settings-sec">
+            <h2> Options </h2>
 
             <div id="labels-wrap">
                 <div class="settings-label">
