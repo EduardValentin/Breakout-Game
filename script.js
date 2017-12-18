@@ -1,9 +1,10 @@
 //window.onload = function () {
     /* ===================== Data ===================== */
-    function Ball(xx, yy, rad) {
+    function Ball(xx, yy, rad,pimg) {
         this.x = (xx) ? xx : 0;
         this.y = (yy) ? yy : 0;
         this.radius = (rad) ? rad : 10;
+        this.img = (pimg) ? pimg : undefined;
     }
 
     function Paddle(xx, yy, width, height) {
@@ -18,7 +19,7 @@
         this.y = (y) ? y : 0;
         this.width = (width) ? width : 50;
         this.height = (height) ? height : 20;
-        this.status = 1;
+        this.status = 1;	// 1 = broken, 0 else
     }
 
     // game variables
@@ -39,12 +40,19 @@
         score,
         lives,
         paddle,
+        paddle_h = 10,
         ball,
+        ball_r = 12,
         bricks,
         paddle_w = 100,
-        secondsToSpeedIncrease = 3,
-        runTime,
-        startTime;
+        secondsToSpeedIncrease = 8,
+        secondsToPowerUp = 20,
+        frames,
+        startTime,
+        iddlePowerUp,
+        powerUpAtSecond,
+        powerUpsActive,
+        bricksActive;
 
     // controls
     var right_pressed = false;
@@ -61,15 +69,26 @@
     var canvas = document.getElementById("gameCanvas");     /* Game canvas */
     var ctx = canvas.getContext("2d");                      /* Game context (2d) */
 
+    var speedLevels = [0.50,0.60,0.70];
+    var speedLimits = [3.5,4,6];					// after how many speed increases to stop increasing speed
+    var speedIncreasedBy = 0;
+
+    var runtime = {
+    	cnt : 0,
+    	get seconds() {
+    		return this.cnt;
+    	},
+    	set seconds(frames) {
+    		this.cnt = Math.floor(frames/60);
+    	}
+    }
+
+    var iddleSpdInc,
+    	spdIncreasedAtSecond;		// second at wich last speed increase occured
 
 
 
-
-
-
-
-
-
+        var tempImg = new Image();
 
 
 
@@ -141,18 +160,19 @@
 
     function startGame() {
         computeValues();
-        runTime = 0;
-        startTime = Date.now();
+        frames = 0;
         gameLoopTimer = window.requestAnimationFrame(gameLoop);
     }
 
     function restartGame() {
+    	removePopUp();
         window.cancelAnimationFrame(gameLoopTimer);	// First we stop the animation request made earlier then start another one
         startGame();
     }
 
     function addEventListeners() {
         /* Event listeners */
+
         document.addEventListener("mousemove", mouseMoveHandler, false);
         document.addEventListener("keydown", keyDownHandler, false);
         document.addEventListener("keyup", keyUpHandler, false);
@@ -182,6 +202,9 @@
 
     function setOnLocalStorage() {
         if (typeof (Storage) !== "undefined") {
+        	var input_ballID = document.getElementById("drop-ball").firstChild.id;
+        	if(input_ballID)
+        		window.localStorage.setItem("input_ballID",input_ballID);
 
             var input_rows = document.getElementById("input-lines").value;
             window.localStorage.setItem("input_rows", input_rows);
@@ -199,16 +222,16 @@
                 if (item.checked = true) {
                     switch (item.value) {
                         case "easy":
-                            dificulty = 1;
+                            dificulty = 0;
                             break;
                         case "medium":
-                            dificulty = 2;
+                            dificulty = 1;
                             break;
                         case "hard":
-                            dificulty = 3;
+                            dificulty = 2;
                             break;
                         default:
-                            dificulty = 1;
+                            dificulty = 0;
                     }
                 }
             });
@@ -221,35 +244,57 @@
 
     function computeValues() {
 
-
         brick_rows = (typeof (Storage) !== "undefined" && window.localStorage.input_rows) ? parseInt(window.localStorage.input_rows) : 3;
         brick_width = (typeof (Storage) !== "undefined" && window.localStorage.input_bwidth) ? parseInt(window.localStorage.input_bwidth) : 80;
         brick_height = (typeof (Storage) !== "undefined" && window.localStorage.input_bheight) ? parseInt(window.localStorage.input_bheight) : 15;
-        dificulty = (typeof (Storage) !== "undefined" && window.localStorage.dificulty) ? parseInt(window.localStorage.dificulty) : 1;
+        dificulty = (typeof (Storage) !== "undefined" && window.localStorage.dificulty) ? parseInt(window.localStorage.dificulty) : 0;
 
-        switch (dificulty) {
-            case "1":
-                b_speedIncrease = 0.5;
-                break;
-            case "2":
-                b_speedIncrease = 0.7;
-                break;
-            case "3":
-                b_speedIncrease = 1;
-                break;
+        if(typeof(Storage) !== "undefined") {
+        	document.getElementById("input-lines").value = window.localStorage.input_rows;
+        	document.getElementById("input-bwidth").value = window.localStorage.input_bwidth;
+        	document.getElementById("input-bheight").value = window.localStorage.input_bheight;
+        	
+        	switch (dificulty) {
+        		case 0:
+        			document.getElementById("easy").checked = true;
+        			break;
+        		case 1:
+        			document.getElementById("medium").checked = true;
+        			break;
+        		case 2:
+        			document.getElementById("hard").checked = true;
+        			break;
+        		default:
+        			document.getElementById("easy").checked = true;
+        	}
         }
 
         pause = true;
         score = 0;
         lives = 3;
         brick_padding = 10;
+        speedIncreasedBy = 0;
         brick_offset_top = brick_offset_left = 30;
         b_dx = b_init_speed;
         b_dy = -b_init_speed;
+        iddleSpdInc = false;
+        iddlePowerUp = false;
+        speedIncreasedAtSecond = 0;
+        powerUpsActive = 0;
 
         /* Create paddle, ball, and our bricks */
-        paddle = new Paddle(canvas.width / 2 - (paddle_w / 2), canvas.height - 30, paddle_w);
-        ball = new Ball(paddle.x + paddle.width / 2, paddle.y);
+        paddle = new Paddle(canvas.width / 2 - (paddle_w / 2), canvas.height - paddle_h, paddle_w, paddle_h);
+		
+		var tempImg;
+
+		if(window.localStorage.input_ballID) {
+			tempImg = document.getElementById(window.localStorage.input_ballID);
+		} else {
+			tempImg = new Image();
+			tempImg.src = "_assets/svg/tennis.svg";
+		}     
+        
+        ball = new Ball(paddle.x + paddle.width / 2, paddle.y - 2*ball_r,ball_r,tempImg);
 
         bricks = new Array();
         brick_col = Math.floor(ctx.canvas.width / (brick_width + brick_padding)) - 1;
@@ -263,21 +308,18 @@
                 bricks[i][j] = new Brick(brickx, bricky, brick_width, brick_height);
             }
         }
+
+        bricksActive = brick_col * brick_rows;
     }
 
     function drawBall(ball, color) {
         // drawing the ball
-
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = (color) ? color : "#0095DD";
-        ctx.fill();
-        ctx.closePath();
+        ctx.drawImage(ball.img, ball.x,ball.y,ball.radius*2,ball.radius*2);
     }
 
     function drawPaddle(paddle, color) {
         ctx.beginPath();
-        ctx.rect(paddle.x, ctx.canvas.height - paddle.height, paddle.width, paddle.height);
+        ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
         ctx.fillStyle = (color) ? color : "#0095DD";
         ctx.fill();
         ctx.closePath();
@@ -289,7 +331,13 @@
                 if (bricks[i][j].status == 1) {
                     ctx.beginPath();
                     ctx.rect(bricks[i][j].x, bricks[i][j].y, brick_width, brick_height);
-                    ctx.fillStyle = (color) ? color : "#0095DD";
+                    
+                    let tempColor = color;
+
+                    if(bricks[i][j].hasOwnProperty("powerUp"))
+                    	tempColor = "yellow";
+
+                    ctx.fillStyle = (tempColor) ? tempColor : "#0095DD";
                     ctx.fill();
                     ctx.closePath();
                 }
@@ -312,11 +360,15 @@
             // check if ball drops down , and lose a life ,or lose the game
             lives--;
             if (!lives) {
-                alert("GAME OVER");
-                document.location.reload();
+            	pause = true;
+                let popup = createPopUp("You lose, try again!");
+                let nodeToRemove = document.getElementById("close-popup");
+                popup.firstChild.removeChild(nodeToRemove);
+                //document.location.reload();
             } else {
                 ball.x = canvas.width / 2;
                 ball.y = canvas.height - 30;
+                speedIncreasedBy = 0;
                 b_dx = b_init_speed;
                 b_dy = -b_init_speed;
                 paddle.x = (canvas.width - paddle.width) / 2;
@@ -328,13 +380,21 @@
             for (let j = 0; j < brick_col; j++) {
                 let b = bricks[i][j];
                 if (b.status == 1 && (ball.x > b.x && ball.x < b.x + brick_width && ball.y > b.y && ball.y < b.y + brick_height)) {
+                    
                     b_dy = -b_dy;
                     bricks[i][j].status = 0;
                     score++;
-                    if (score == brick_rows * brick_col) {
-                        alert("YOU WIN, CONGRATULATIONS!");
+                    bricksActive--;
+
+                    if(b.hasOwnProperty("powerUp"))
+                    	b.powerUp();
+
+                    if (bricksActive == 0) {
                         pause = true;
-                        document.location.reload();
+                        let popup = createPopUp("You win, congratulations man!");
+                		let nodeToRemove = document.getElementById("close-popup");
+                		popup.firstChild.removeChild(nodeToRemove);
+                        //document.location.reload();
                     }
                 }
             }
@@ -365,24 +425,75 @@
     function gameLoop() {
 
         // Main game loop 
-        gameLoopTimer = requestAnimationFrame(gameLoop);
+        /*
+			Main idea for increasing ball speed with respect to time:
+				-> if the number of seconds of actualy playing the game modulo the seconds at wich we change dificulty is equal to 0 that means it's time to increase ball speed
+				-> after we increase ball speed we need to keep an idle state to prevent ball increasing speed at every frame, because there are 60 frames in a second by the time a second passes the ball speed would increase 60 times -> not correct
+				-> after one second of iddle state we relase the iddle state  
+        */
 
-        // increase speed if it's time
-        var currentTime = Date.now();
-        if (((currentTime - startTime) / 60) % secondsToSpeedIncrease) {
-            b_dx += b_speedIncrease;
-            b_dy -= b_speedIncrease;
+        if(iddleSpdInc && runtime.seconds - speedIncreasedAtSecond >= 1) {
+        	// if we are in iddle state we should check if one second has passed 
+        	iddleSpdInc = false;
+        }
+
+        if(iddlePowerUp && runtime.seconds - powerUpAtSecond >= 1) {
+        	// if we are in iddle state we should check if one second has passed 
+        	iddlePowerUp = false;
+        }
+
+        if(!iddleSpdInc && runtime.seconds != 0 && (speedIncreasedBy < speedLimits[dificulty]) && (runtime.seconds % secondsToSpeedIncrease == 0)) {
+        	// see the direction where the ball is moving and augment that by speedIncrease factor if it's possible
+        	iddleSpdInc = true;
+
+        	if(b_dx < 0)
+        		b_dx -= speedLevels[dificulty];
+        	  else 
+        		b_dx += speedLevels[dificulty];
+        	
+
+        	if(b_dy < 0)
+        		b_dy -= speedLevels[dificulty];
+        	  else 
+        		b_dy += speedLevels[dificulty];
+        	
+        	speedIncreasedBy += speedLevels[dificulty];
+        	speedIncreasedAtSecond = runtime.seconds;	// important
+        }
+
+        if(powerUpsActive < 5 && !iddlePowerUp && runtime.seconds && (runtime.seconds % secondsToPowerUp) == 0) {
+        	let ok = false;
+        	iddlePowerUp = true;
+        	do {
+
+				let randCol = getRandomInt(0,brick_col-1);
+        		let randRow = getRandomInt(0,brick_rows-1);
+        		
+        		if(bricks[randRow][randCol].status == 1 && !bricks[randRow][randCol].hasOwnProperty("powerUp")) {
+        			bricks[randRow][randCol].powerUp = function() {
+        				score+=10;			// easy money
+        			}
+
+        			ok = true;
+        			powerUpsActive++;
+        		}
+        	} while(!ok);
+
+        	powerUpAtSecond = runtime.seconds;
         }
 
         // drawing code
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawLives();
         drawScore();
-        drawBall(ball, "red");
-        drawPaddle(paddle);
+        drawBall(ball);
+        drawPaddle(paddle,"#324a5e");
         drawBricks();
-
+        
         if (!pause) {
+       		
+       		frames++;					// the number of frames spent actualy playing, we need this to time things in game like power ups
+       		runtime.seconds = frames;	// transforms frames into frames/60 by a setter 
 
             collisionDetection();
 
@@ -395,6 +506,9 @@
             ball.x += b_dx;
             ball.y += b_dy;
         }
+        
+        gameLoopTimer = requestAnimationFrame(gameLoop);
+
     }
 
     function keyDownHandler(e) {
@@ -422,15 +536,16 @@
 
     function togglePause() {
         if (pause === true) {
+        	removePopUp();
             pause = false;
         } else {
+        	var popUpReference = createPopUp("pause.")
             pause = true;
         }
     }
 
     function toggleLightbox() {
 
-        console.log(this);
         let actionOnName = this.getAttribute("data-action-on");
         let actionOn = document.querySelector('[data-action-src ="' + actionOnName + '"]');
         if (actionOn.classList.contains("lb-closed")) {
@@ -444,4 +559,66 @@
 
         }
     }
+
+    function getRandomInt(min, max) {
+    	return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+	function allowDrop(ev) {
+		ev.preventDefault();
+	}
+
+	function dragBall(ev) {
+		ev.dataTransfer.setData("text",ev.target.id);
+	}
+
+	function dropBall(ev) {
+		ev.preventDefault();
+		var dropSourceNode = document.getElementById("drop-ball");
+		
+		// first we remove any prevoius selected ball
+		if(dropSourceNode.firstChild) {
+			let nodeToRemove = dropSourceNode.querySelector("img");
+			dropSourceNode.removeChild(nodeToRemove);
+		}
+
+		var imgID = ev.dataTransfer.getData("text");
+		var sourceImage = document.getElementById(imgID);
+		var clone = sourceImage.cloneNode();
+		dropSourceNode.appendChild(clone);
+	}
+
+	function removePopUp() {
+		var nodeToRemove = document.getElementById("pop-up");
+       	if(nodeToRemove)
+       		document.body.removeChild(nodeToRemove);
+       	else
+       		console.log("No pop-up to be removed.\n");
+	}
+
+	function createPopUp(text) {
+		var wrapDiv = document.createElement("div");
+    	wrapDiv.id = "pop-up";
+    	
+    	var closeBtn = new Image();
+    	closeBtn.src = "_assets/svg/close-popup.svg";
+    	closeBtn.id = "close-popup";
+    	closeBtn.onclick = removePopUp;
+
+    	var innerDiv = document.createElement("div");
+    	innerDiv.id = "pop-up-inner";
+    	innerDiv.appendChild(closeBtn);
+
+    	var paragraph = document.createElement("p");
+    	var textNode = document.createTextNode(text);
+    	paragraph.appendChild(textNode);
+    	innerDiv.appendChild(paragraph);
+    	wrapDiv.appendChild(innerDiv);
+    	var scriptTag = document.getElementsByTagName("script");
+
+    	document.body.insertBefore(wrapDiv,scriptTag[0]);
+    	
+    	return wrapDiv;
+	}
+
 //}
