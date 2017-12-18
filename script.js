@@ -1,4 +1,4 @@
-//window.onload = function () {
+window.onload = function () {
     /* ===================== Data ===================== */
     function Ball(xx, yy, rad,pimg) {
         this.x = (xx) ? xx : 0;
@@ -88,10 +88,6 @@
 
 
 
-        var tempImg = new Image();
-
-
-
 
 
 
@@ -166,6 +162,7 @@
 
     function restartGame() {
     	removePopUp();
+        document.getElementById("playPause").addEventListener("click", togglePause, false);
         window.cancelAnimationFrame(gameLoopTimer);	// First we stop the animation request made earlier then start another one
         startGame();
     }
@@ -359,10 +356,13 @@
         } else if ((ball.y + b_dy > canvas.height - ball.radius) && !(ball.x > paddle.x && ball.x < paddle.x + paddle.width)) {
             // check if ball drops down , and lose a life ,or lose the game
             lives--;
-            if (!lives) {
+            if (lives <= 0) {
             	pause = true;
                 let popup = createPopUp("You lose, try again!");
                 let nodeToRemove = document.getElementById("close-popup");
+        		
+        		document.getElementById("playPause").removeEventListener("click", togglePause);
+
                 popup.firstChild.removeChild(nodeToRemove);
                 //document.location.reload();
             } else {
@@ -393,6 +393,7 @@
                         pause = true;
                         let popup = createPopUp("You win, congratulations man!");
                 		let nodeToRemove = document.getElementById("close-popup");
+        				document.getElementById("playPause").removeEventListener("click", togglePause);
                 		popup.firstChild.removeChild(nodeToRemove);
                         //document.location.reload();
                     }
@@ -599,7 +600,7 @@
 	function createPopUp(text) {
 		var wrapDiv = document.createElement("div");
     	wrapDiv.id = "pop-up";
-    	
+
     	var closeBtn = new Image();
     	closeBtn.src = "_assets/svg/close-popup.svg";
     	closeBtn.id = "close-popup";
@@ -621,4 +622,4 @@
     	return wrapDiv;
 	}
 
-//}
+}
