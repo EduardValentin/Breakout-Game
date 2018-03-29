@@ -290,7 +290,7 @@
 			tempImg = document.getElementById(window.localStorage.input_ballID);
 		} else {
 			tempImg = new Image();
-			tempImg.src = "_assets/svg/tennis.svg";
+			tempImg.src = "assets/svg/tennis.svg";
 		}     
         
         ball = new Ball(paddle.x + paddle.width / 2, paddle.y - 2*ball_r,ball_r,tempImg);
@@ -604,7 +604,7 @@
     	wrapDiv.id = "pop-up";
 
     	var closeBtn = new Image();
-    	closeBtn.src = "_assets/svg/close-popup.svg";
+    	closeBtn.src = "assets/svg/close-popup.svg";
     	closeBtn.id = "close-popup";
     	closeBtn.onclick = removePopUp;
 
