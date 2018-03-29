@@ -1,4 +1,4 @@
-window.onload = function () {
+
     /* ===================== Data ===================== */
     function Ball(xx, yy, rad,pimg) {
         this.x = (xx) ? xx : 0;
@@ -199,10 +199,12 @@ window.onload = function () {
 
     function setOnLocalStorage() {
         if (typeof (Storage) !== "undefined") {
-        	var input_ballID = document.getElementById("drop-ball").firstChild.id;
-        	if(input_ballID)
-        		window.localStorage.setItem("input_ballID",input_ballID);
+        	if(document.getElementById("drop-ball").firstChild) {
 
+	        	var input_ballID = document.getElementById("drop-ball").firstChild.id;
+	        	if(input_ballID)
+	        		window.localStorage.setItem("input_ballID",input_ballID);
+        	}
             var input_rows = document.getElementById("input-lines").value;
             window.localStorage.setItem("input_rows", input_rows);
 
@@ -617,9 +619,10 @@ window.onload = function () {
     	wrapDiv.appendChild(innerDiv);
     	var scriptTag = document.getElementsByTagName("script");
 
+    	wrapDiv.style.fontSize = "1.3em";
     	document.body.insertBefore(wrapDiv,scriptTag[0]);
     	
     	return wrapDiv;
 	}
 
-}
+
